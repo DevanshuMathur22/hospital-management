@@ -1,7 +1,16 @@
-// services/api.ts
-
-import axios from "axios";
+import axios from "axios"
+import AsyncStorage from "@react-native-async-storage/async-storage"
 
 export const API = axios.create({
-  baseURL: "http://192.168.1.7:3000/api",
-});
+  baseURL: "https://hospital-management-one-ruby.vercel.app/api"
+})
+
+API.interceptors.request.use(async (config) => {
+  const token = await AsyncStorage.getItem("token")
+
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`
+  }
+
+  return config
+})

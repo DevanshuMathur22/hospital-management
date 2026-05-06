@@ -1,7 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<resources>
-    <string name="app_name">hospital-management</string>
-    <string name="title_activity_main">hospital-management</string>
-    <string name="package_name">com.devanshu.hospitalmanagement</string>
-    <string name="custom_url_scheme">com.devanshu.hospitalmanagement</string>
-</resources>
