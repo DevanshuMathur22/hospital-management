@@ -503,10 +503,12 @@ model User {
   resetToken       String?
   resetTokenExpiry DateTime?
 
+  otp String?
+  otpExpiry DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // ✅ MATCHED RELATIONS (IMPORTANT)
   admins        Admin[]        @relation("UserAdmins")
   doctors       Doctor[]       @relation("UserDoctors")
   patients      Patient[]      @relation("UserPatients")

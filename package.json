@@ -39,6 +39,7 @@
     "react-native-safe-area-context": "^5.7.0",
     "react-native-screens": "^4.24.0",
     "recharts": "^3.8.1",
+    "resend": "^6.12.3",
     "sweetalert2": "^11.26.21",
     "swiper": "^12.1.2",
     "tailwind-merge": "^3.5.0",
