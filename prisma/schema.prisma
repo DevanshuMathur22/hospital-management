@@ -160,14 +160,17 @@ model Appointment {
 
   prescription Prescription[]
 
-  // 🔥 ADD THIS
   bills Bill[]
 
   @@unique([doctorId, date, time])
+
   @@index([doctorId])
   @@index([patientId])
-}
 
+  @@index([date])
+  @@index([status])
+  @@index([doctorId, date])
+}
 //////////////////////////////
 // PRESCRIPTIONS
 //////////////////////////////
@@ -228,7 +231,13 @@ model Slot {
   doctor Doctor @relation(fields: [doctorId], references: [id], onDelete: Cascade)
 
   @@unique([doctorId, date, time])
+
   @@index([doctorId])
+
+  @@index([date])
+  @@index([isBooked])
+
+  @@index([doctorId, date])
 }
 
 //////////////////////////////
@@ -292,7 +301,7 @@ model Vital {
 
   patientId String @db.ObjectId
   nurseId   String @db.ObjectId
-  doctorId  String @db.ObjectId // 🔥 ADD THIS
+  doctorId  String @db.ObjectId
 
   bp          String?
   temperature Float?
@@ -304,12 +313,14 @@ model Vital {
 
   patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
   nurse   Nurse   @relation(fields: [nurseId], references: [id], onDelete: Cascade)
-  doctor  Doctor  @relation(fields: [doctorId], references: [id], onDelete: Cascade) // 🔥 ADD
+  doctor  Doctor  @relation(fields: [doctorId], references: [id], onDelete: Cascade)
 
   @@index([patientId])
-  @@index([doctorId]) // 🔥 ADD
-}
+  @@index([doctorId])
 
+  @@index([nurseId])
+  @@index([createdAt])
+}
 //////////////////////////////
 // QUEUE
 //////////////////////////////
@@ -330,8 +341,12 @@ model Queue {
   patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
 
   @@unique([doctorId, token])
+
   @@index([doctorId])
   @@index([patientId])
+
+  @@index([status])
+  @@index([createdAt])
 }
 
 //////////////////////////////
@@ -379,7 +394,10 @@ model Medicine {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  billItems PharmacyBillItem[] // 🔥 IMPORTANT
+  billItems PharmacyBillItem[]
+
+  @@index([name])
+  @@index([company])
 }
 
 ///////////////////////////////
@@ -411,8 +429,13 @@ model Admission {
   patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
   nurse   Nurse?  @relation(fields: [nurseId], references: [id])
 
-  // ✅ ADD THIS (IMPORTANT)
   bills Bill[]
+
+  @@index([doctorId])
+  @@index([patientId])
+  @@index([bedId])
+
+  @@index([status])
 }
 
 ///////////////////////////////
@@ -428,8 +451,12 @@ model Bed {
 
   createdAt DateTime @default(now())
 
-  // 🔥 ADD THIS
   admissions Admission[]
+
+  @@index([ward])
+  @@index([isOccupied])
+
+  @@unique([ward, number])
 }
 
 ///////////////////////////////
@@ -453,12 +480,17 @@ model Bill {
 
   createdAt DateTime @default(now())
 
-  // ✅ RELATIONS ADD KAR
   patient     Patient      @relation(fields: [patientId], references: [id])
   appointment Appointment? @relation(fields: [appointmentId], references: [id])
   admission   Admission?   @relation(fields: [admissionId], references: [id])
-}
 
+  @@index([patientId])
+
+  @@index([appointmentId])
+  @@index([admissionId])
+
+  @@index([status])
+}
 ////////////////////////////////
 //USer
 ///////////////////////////////
