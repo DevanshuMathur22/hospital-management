@@ -12,6 +12,8 @@ export default function Patients(){
   const [search,setSearch] = useState("")
   const [loading,setLoading] = useState(true)
   const [error,setError] = useState("")
+  const [page,setPage] = useState(1)
+  const [totalPages,setTotalPages] = useState(1)
 
   useEffect(()=>{
 
@@ -19,7 +21,7 @@ export default function Patients(){
 
       try{
 
-        const res = await fetch(`/api/patients?search=${search}`,{
+        const res = await fetch(`/api/patients?search=${search}&page=${page}`,{
           credentials:"include"
         })
 
@@ -28,8 +30,9 @@ export default function Patients(){
         if(!res.ok){
           setError(data.error || "Failed to load")
         }else{
-          setPatients(data.data || [])
-          setFiltered(data.data || [])
+          setPatients(Array.isArray(data) ? data : (data.data || []))
+          setFiltered(Array.isArray(data) ? data : (data.data || []))
+          setTotalPages(Array.isArray(data) ? 1 : (data.totalPages || 1))
         }
 
       }catch(err){
@@ -42,7 +45,7 @@ export default function Patients(){
 
     load()
 
-  },[search])
+  },[search, page])
 
   /* SEARCH LOCAL */
   useEffect(()=>{
@@ -165,6 +168,31 @@ export default function Patients(){
             </Link>
 
           ))}
+
+        </div>
+
+        {/* PAGINATION */}
+        <div className="flex justify-center gap-2 mt-8">
+
+          <button
+            disabled={page===1}
+            onClick={()=>setPage(p=>p-1)}
+            className="px-3 py-1 border rounded disabled:opacity-40"
+          >
+            Prev
+          </button>
+
+          <span className="text-sm px-2">
+            {page} / {totalPages}
+          </span>
+
+          <button
+            disabled={page===totalPages}
+            onClick={()=>setPage(p=>p+1)}
+            className="px-3 py-1 border rounded disabled:opacity-40"
+          >
+            Next
+          </button>
 
         </div>
 

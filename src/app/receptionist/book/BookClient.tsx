@@ -80,9 +80,10 @@ export default function BookPage() {
       const patientsData = await p.json()
       const doctorsData = await d.json()
 
-      setPatients(patientsData.data || [])
+      setPatients(Array.isArray(patientsData) ? patientsData : (patientsData.data || []))
 
-      const availableDoctors = doctorsData.filter((doc:any)=>doc.isAvailable !== false)
+      const doctorsArr = Array.isArray(doctorsData) ? doctorsData : (doctorsData.data || [])
+      const availableDoctors = doctorsArr.filter((doc:any)=>doc.isAvailable !== false)
       setDoctors(availableDoctors)
     }
     load()

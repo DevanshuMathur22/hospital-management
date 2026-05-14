@@ -22,24 +22,48 @@ async function getUser(){
 
 /* -------- GET -------- */
 
-export async function GET(){
+export async function GET(req:Request){
   try{
 
-    const doctors = await prisma.doctor.findMany({
-      orderBy:{ createdAt:"desc" },
-      include:{
-        user:{ select:{ email:true } },
-        nurses:{
-          select:{
-            id:true,
-            name:true,
-            user:{ select:{ email:true } }
-          }
-        }
-      }
-    })
+    const url = new URL(req.url)
+    const search = url.searchParams.get("search") || ""
+    const page = Number(url.searchParams.get("page") || 1)
+    const limit = 6
+    const skip = (page - 1) * limit
 
-    return NextResponse.json(doctors)
+    const where = search ? {
+      OR: [
+        { name: { contains: search, mode: "insensitive" as const } },
+        { specialization: { contains: search, mode: "insensitive" as const } }
+      ]
+    } : {}
+
+    const [doctors, total] = await Promise.all([
+      prisma.doctor.findMany({
+        where,
+        orderBy:{ createdAt:"desc" },
+        include:{
+          user:{ select:{ email:true } },
+          nurses:{
+            select:{
+              id:true,
+              name:true,
+              user:{ select:{ email:true } }
+            }
+          }
+        },
+        skip,
+        take: limit
+      }),
+      prisma.doctor.count({ where })
+    ])
+
+    return NextResponse.json({
+      data: doctors,
+      total,
+      page,
+      totalPages: Math.ceil(total / limit)
+    })
 
   }catch(error){
     return NextResponse.json({ error:"Failed" },{ status:500 })

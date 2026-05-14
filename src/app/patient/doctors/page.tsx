@@ -54,9 +54,10 @@ export default function PatientDoctors() {
     fetch("/api/doctors")
       .then(res => res.json())
       .then(data => {
-        setDoctors(data || [])
+        const docs = Array.isArray(data) ? data : (data.data || [])
+        setDoctors(docs)
 
-        const grouped = (data || []).reduce((acc: any, doc: any) => {
+        const grouped = docs.reduce((acc: any, doc: any) => {
           if (!acc[doc.specialization]) acc[doc.specialization] = []
           acc[doc.specialization].push(doc)
           return acc

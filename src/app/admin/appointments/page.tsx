@@ -9,13 +9,16 @@ export default function AdminAppointments(){
 const [appointments,setAppointments] = useState<any[]>([])
 const [loading,setLoading] = useState(true)
 const [search,setSearch] = useState("")
+const [page,setPage] = useState(1)
+const [totalPages,setTotalPages] = useState(1)
 
 /* FETCH */
 const fetchAppointments = async()=>{
 try{
-const res = await fetch("/api/appointments",{ credentials:"include" })
+const res = await fetch(`/api/appointments?page=${page}&search=${search}`,{ credentials:"include" })
 const data = await res.json()
-setAppointments(data || [])
+setAppointments(Array.isArray(data) ? data : (data.data || []))
+setTotalPages(Array.isArray(data) ? 1 : (data.totalPages || 1))
 }catch(err){
 console.log("APPOINTMENT ERROR:",err)
 }
@@ -24,7 +27,7 @@ setLoading(false)
 
 useEffect(()=>{
 fetchAppointments()
-},[])
+},[page,search])
 
 /* UPDATE */
 const updateStatus = async(id:string,status:string)=>{
@@ -202,7 +205,33 @@ Cancel
 
 </div>
 
+{/* PAGINATION */}
+<div className="flex justify-center gap-2 mt-6">
+
+  <button
+    disabled={page===1}
+    onClick={()=>setPage(p=>p-1)}
+    className="px-3 py-1 border rounded disabled:opacity-40"
+  >
+    Prev
+  </button>
+
+  <span className="text-sm px-2">
+    {page} / {totalPages}
+  </span>
+
+  <button
+    disabled={page===totalPages}
+    onClick={()=>setPage(p=>p+1)}
+    className="px-3 py-1 border rounded disabled:opacity-40"
+  >
+    Next
+  </button>
+
+</div>
+
 </div>
 
 )
+
 }

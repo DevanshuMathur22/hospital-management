@@ -43,8 +43,8 @@ export default function Appointments() {
       const doctorsData = await d.json()
       const patientsData = await p.json()
 
-      setDoctors(doctorsData || [])
-      setPatients(patientsData.data || [])
+      setDoctors(Array.isArray(doctorsData) ? doctorsData : (doctorsData.data || []))
+      setPatients(Array.isArray(patientsData) ? patientsData : (patientsData.data || []))
 
       setLoading(false)
     }

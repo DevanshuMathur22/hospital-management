@@ -12,19 +12,22 @@ export default function Doctors(){
   const [doctors,setDoctors] = useState<any[]>([])
   const [search,setSearch] = useState("")
   const [loading,setLoading] = useState(true)
+  const [page,setPage] = useState(1)
+  const [totalPages,setTotalPages] = useState(1)
 
   useEffect(()=>{
 
     const load = async()=>{
-      const res = await fetch("/api/doctors",{ credentials: "include" })
+      const res = await fetch(`/api/doctors?page=${page}&search=${search}`,{ credentials: "include" })
       const data = await res.json()
-      setDoctors(data || [])
+      setDoctors(Array.isArray(data) ? data : (data.data || []))
+      setTotalPages(Array.isArray(data) ? 1 : (data.totalPages || 1))
       setLoading(false)
     }
 
     load()
 
-  },[])
+  },[page,search])
 
   const filtered = doctors.filter(d =>
     d.name?.toLowerCase().includes(search.toLowerCase()) ||
@@ -121,6 +124,31 @@ export default function Doctors(){
             </motion.div>
 
           ))}
+
+        </div>
+
+        {/* PAGINATION */}
+        <div className="flex justify-center gap-2 mt-8">
+
+          <button
+            disabled={page===1}
+            onClick={()=>setPage(p=>p-1)}
+            className="px-3 py-1 border rounded disabled:opacity-40"
+          >
+            Prev
+          </button>
+
+          <span className="text-sm px-2">
+            {page} / {totalPages}
+          </span>
+
+          <button
+            disabled={page===totalPages}
+            onClick={()=>setPage(p=>p+1)}
+            className="px-3 py-1 border rounded disabled:opacity-40"
+          >
+            Next
+          </button>
 
         </div>
 

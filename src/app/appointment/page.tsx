@@ -39,7 +39,10 @@ if(!isLogged) return
 
 fetch("/api/doctors")
 .then(res=>res.json())
-.then(data=>setDoctors(data))
+.then(data=>{
+  const docs = Array.isArray(data) ? data : (data.data || [])
+  setDoctors(docs)
+})
 
 fetch("/api/appointments",{ credentials:"include" })
 .then(res=>res.json())

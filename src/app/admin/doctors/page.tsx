@@ -10,19 +10,22 @@ export default function AdminDoctors() {
 const [doctors,setDoctors] = useState<any[]>([])
 const [search,setSearch] = useState("")
 const [loading,setLoading] = useState(true)
+const [page,setPage] = useState(1)
+const [totalPages,setTotalPages] = useState(1)
 
 /* FETCH */
 useEffect(()=>{
 
-fetch("/api/doctors",{ credentials:"include" })
+fetch(`/api/doctors?page=${page}&search=${search}`,{ credentials:"include" })
 .then(res=>res.json())
 .then(data=>{
-setDoctors(data || [])
+  setDoctors(Array.isArray(data) ? data : (data.data || []))
+  setTotalPages(Array.isArray(data) ? 1 : (data.totalPages || 1))
 })
 .catch(()=>setDoctors([]))
 .finally(()=>setLoading(false))
 
-},[])
+},[page,search])
 
 /* DELETE */
 const deleteDoctor = async(id:string)=>{
@@ -129,7 +132,7 @@ No doctors found
 
 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
 
-{docs.map((doctor:any)=>(
+{docs.map((doctor:any)=>
 
 <motion.div
 key={doctor.id}
@@ -139,7 +142,6 @@ whileHover={{y:-4}}
 className="bg-white border rounded-2xl p-4 sm:p-5 shadow-sm hover:shadow-lg transition space-y-3"
 >
 
-{/* DOCTOR */}
 <div className="flex items-center gap-3">
 
 <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
@@ -157,17 +159,14 @@ Doctor
 
 </div>
 
-{/* BADGE */}
 <span className="inline-block bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs">
 {doctor.specialization}
 </span>
 
-{/* EXPERIENCE */}
 <p className="text-xs sm:text-sm text-gray-600">
 {doctor.experience} years experience
 </p>
 
-{/* ACTIONS */}
 <div className="flex gap-3 pt-1">
 
 <Link
@@ -190,15 +189,41 @@ Delete
 
 </motion.div>
 
-))}
+)}
 
 </div>
 
 </div>
 
 ))}
+
+{/* PAGINATION */}
+<div className="flex justify-center gap-2 mt-6">
+
+  <button
+    disabled={page===1}
+    onClick={()=>setPage(p=>p-1)}
+    className="px-3 py-1 border rounded disabled:opacity-40"
+  >
+    Prev
+  </button>
+
+  <span className="text-sm px-2">
+    {page} / {totalPages}
+  </span>
+
+  <button
+    disabled={page===totalPages}
+    onClick={()=>setPage(p=>p+1)}
+    className="px-3 py-1 border rounded disabled:opacity-40"
+  >
+    Next
+  </button>
+
+</div>
 
 </div>
 
 )
+
 }

@@ -143,12 +143,37 @@ export async function GET(req: Request) {
     /* ===== ADMIN ===== */
     else if (user.role === "admin") {
 
-      appointments = await prisma.appointment.findMany({
-        include: {
-          patient: { select: patientSelect },
-          doctor: { select: doctorSelect }
-        },
-        orderBy: { createdAt: "desc" }
+      const search = url.searchParams.get("search") || ""
+      const page = Number(url.searchParams.get("page") || 1)
+      const limit = 6
+      const skip = (page - 1) * limit
+
+      const where = search ? {
+        OR: [
+          { patient: { name: { contains: search } } },
+          { doctor: { name: { contains: search } } }
+        ]
+      } : {}
+
+      const [data, total] = await Promise.all([
+        prisma.appointment.findMany({
+          where,
+          include: {
+            patient: { select: patientSelect },
+            doctor: { select: doctorSelect }
+          },
+          orderBy: { createdAt: "desc" },
+          skip,
+          take: limit
+        }),
+        prisma.appointment.count({ where })
+      ])
+
+      return NextResponse.json({
+        data,
+        total,
+        page,
+        totalPages: Math.ceil(total / limit)
       })
     }
 

@@ -17,7 +17,8 @@ export default function Doctors() {
     const fetchDoctors = async () => {
       const res = await fetch("/api/doctors",{ credentials: "include" })
       const data = await res.json()
-      setDoctors(data)
+      const docs = Array.isArray(data) ? data : (data.data || [])
+      setDoctors(docs)
     }
     fetchDoctors()
   }, [])

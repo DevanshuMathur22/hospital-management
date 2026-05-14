@@ -7,24 +7,34 @@ export default function Queue(){
 
   const [queue,setQueue] = useState<any[]>([])
   const [loading,setLoading] = useState(true)
+  const [page,setPage] = useState(1)
+  const [totalPages,setTotalPages] = useState(1)
 
   /* 🔥 AUTO REFRESH */
   useEffect(()=>{
 
     const load = async()=>{
-      const res = await fetch("/api/queue",{ credentials: "include" })
+      const res = await fetch(`/api/queue?page=${page}`,{ credentials: "include" })
       const data = await res.json()
-      setQueue(data || [])
+      setQueue(Array.isArray(data) ? data : (data.data || []))
+      setTotalPages(Array.isArray(data) ? 1 : (data.totalPages || 1))
       setLoading(false)
     }
 
     load()
 
-    const interval = setInterval(load, 5000) // 🔥 refresh every 5 sec
+  },[page])
+
+  /* 🔥 REFRESH ON VISIBLE */
+  useEffect(()=>{
+    const interval = setInterval(async()=>{
+      const res = await fetch(`/api/queue?page=${page}`,{ credentials: "include" })
+      const data = await res.json()
+      setQueue(Array.isArray(data) ? data : (data.data || []))
+    }, 5000)
 
     return ()=>clearInterval(interval)
-
-  },[])
+  },[page])
 
   if(loading){
     return <div className="p-10 text-center">Loading queue...</div>
@@ -90,7 +100,32 @@ export default function Queue(){
 
               </motion.div>
             )
-          })}
+})}
+
+        </div>
+
+        {/* PAGINATION */}
+        <div className="flex justify-center gap-2 mt-8">
+
+          <button
+            disabled={page===1}
+            onClick={()=>setPage(p=>p-1)}
+            className="px-3 py-1 border rounded disabled:opacity-40"
+          >
+            Prev
+          </button>
+
+          <span className="text-sm px-2">
+            {page} / {totalPages}
+          </span>
+
+          <button
+            disabled={page===totalPages}
+            onClick={()=>setPage(p=>p+1)}
+            className="px-3 py-1 border rounded disabled:opacity-40"
+          >
+            Next
+          </button>
 
         </div>
 
@@ -99,4 +134,5 @@ export default function Queue(){
     </div>
 
   )
+
 }

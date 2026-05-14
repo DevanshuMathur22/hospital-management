@@ -40,8 +40,11 @@ appointments:statsData.appointments || 0,
 today:statsData.today || 0
 })
 
-setRecentAppointments((appData || []).slice(0,5))
-setRecentDoctors((docData || []).slice(0,5))
+const docs = Array.isArray(docData) ? docData : (docData.data || [])
+const apps = Array.isArray(appData) ? appData : (appData.data || [])
+
+setRecentAppointments(apps.slice(0,5))
+setRecentDoctors(docs.slice(0,5))
 
 })
 .catch(()=>{})

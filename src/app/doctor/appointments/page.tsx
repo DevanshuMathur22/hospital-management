@@ -26,7 +26,7 @@ export default function DoctorAppointments(){
     try{
       const res = await fetch("/api/appointments",{ credentials:"include" })
       const data = await res.json()
-      setAppointments(Array.isArray(data) ? data : [])
+      setAppointments(Array.isArray(data) ? data : (data.data || []))
     }catch{
       setAppointments([])
     }

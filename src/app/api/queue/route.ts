@@ -7,7 +7,7 @@ import { cookies } from "next/headers"
 /* GET QUEUE */
 /* ========================= */
 
-export async function GET(){
+export async function GET(req:Request){
 
   try{
 
@@ -31,40 +31,72 @@ export async function GET(){
     /* DOCTOR VIEW */
     if(payload.role === "doctor"){
 
+      const url = new URL(req.url)
+      const page = Number(url.searchParams.get("page") || 1)
+      const limit = 10
+      const skip = (page - 1) * limit
+
       const doctor = await prisma.doctor.findFirst({
         where:{ userId: payload.id }
       })
 
-      queue = await prisma.queue.findMany({
-        where:{ doctorId: doctor?.id },
-        include:{
-          patient:{
-            include:{
-              user:{ select:{ email:true } }
+      const [queueData, total] = await Promise.all([
+        prisma.queue.findMany({
+          where:{ doctorId: doctor?.id },
+          include:{
+            patient:{
+              include:{
+                user:{ select:{ email:true } }
+              }
             }
-          }
-        },
-        orderBy:{ token:"asc" }
+          },
+          orderBy:{ token:"asc" },
+          skip,
+          take: limit
+        }),
+        prisma.queue.count({ where: { doctorId: doctor?.id } })
+      ])
+
+      return NextResponse.json({
+        data: queueData,
+        total,
+        page,
+        totalPages: Math.ceil(total / limit)
       })
     }
 
     /* ADMIN + RECEPTIONIST */
     else if(payload.role === "admin" || payload.role === "receptionist"){
 
-      queue = await prisma.queue.findMany({
-        include:{
-          patient:{
-            include:{
-              user:{ select:{ email:true } }
-            }
+      const url = new URL(req.url)
+      const page = Number(url.searchParams.get("page") || 1)
+      const limit = 10
+      const skip = (page - 1) * limit
+
+      const [queueData, total] = await Promise.all([
+        prisma.queue.findMany({
+          include:{
+            patient:{
+              include:{
+                user:{ select:{ email:true } }
+              }
+            },
+            doctor:true
           },
-          doctor:true
-        },
-        orderBy:{ token:"asc" }
+          orderBy:{ token:"asc" },
+          skip,
+          take: limit
+        }),
+        prisma.queue.count()
+      ])
+
+      return NextResponse.json({
+        data: queueData,
+        total,
+        page,
+        totalPages: Math.ceil(total / limit)
       })
     }
-
-    return NextResponse.json(queue)
 
   }catch(err){
 

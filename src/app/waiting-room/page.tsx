@@ -10,13 +10,19 @@ useEffect(()=>{
 
 fetch("/api/queue",{ credentials: "include" })
 .then(res=>res.json())
-.then(setQueue)
+.then(data=>{
+  const arr = Array.isArray(data) ? data : (data.data || [])
+  setQueue(arr)
+})
 
 const interval = setInterval(()=>{
 
 fetch("/api/queue",{ credentials: "include" })
 .then(res=>res.json())
-.then(setQueue)
+.then(data=>{
+  const arr = Array.isArray(data) ? data : (data.data || [])
+  setQueue(arr)
+})
 
 },3000)
 
