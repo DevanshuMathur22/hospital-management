@@ -19,6 +19,7 @@
     "@react-navigation/native-stack": "^7.14.11",
     "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",
+    "compression": "^1.8.1",
     "date-fns": "^4.1.0",
     "framer-motion": "^12.35.2",
     "html2canvas": "^1.4.1",

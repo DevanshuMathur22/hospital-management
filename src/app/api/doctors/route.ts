@@ -42,13 +42,15 @@ export async function GET(req:Request){
       prisma.doctor.findMany({
         where,
         orderBy:{ createdAt:"desc" },
-        include:{
-          user:{ select:{ email:true } },
+        select:{
+          id:true,
+          name:true,
+          specialization:true,
+          experience:true,
           nurses:{
             select:{
               id:true,
-              name:true,
-              user:{ select:{ email:true } }
+              name:true
             }
           }
         },
