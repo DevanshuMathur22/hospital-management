@@ -27,12 +27,12 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url)
     const doctorId = searchParams.get("doctorId")
 
-    if (!doctorId) {
-      return NextResponse.json(
-        { error: "doctorId is required" },
-        { status: 400 }
-      )
-    }
+   if (!doctorId || doctorId === "undefined") {
+  return NextResponse.json(
+    { error: "Valid doctorId required" },
+    { status: 400 }
+  )
+}
 
     const doctor = await prisma.doctor.findUnique({
       where: { id: doctorId },

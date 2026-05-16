@@ -1,306 +1,456 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import {useEffect,useState} from "react"
 import DatePicker from "react-datepicker"
 import "react-datepicker/dist/react-datepicker.css"
+import {motion,AnimatePresence} from "framer-motion"
+import {CalendarDays,Clock3,CheckCircle2,XCircle,RotateCw,X} from "lucide-react"
 import toast from "react-hot-toast"
 
 export default function PatientAdvancedAppointments(){
 
-  const [appointments,setAppointments] = useState<any[]>([])
-  const [selected,setSelected] = useState<any>(null)
-  const [newDate,setNewDate] = useState<Date | null>(null)
-  const [newTime,setNewTime] = useState("")
-  const [availability,setAvailability] = useState<any>(null)
-  const [loading,setLoading] = useState(true)
+const [appointments,setAppointments]=useState<any[]>([])
+const [selected,setSelected]=useState<any>(null)
+const [newDate,setNewDate]=useState<Date|null>(null)
+const [newTime,setNewTime]=useState("")
+const [availability,setAvailability]=useState<any>(null)
+const [loading,setLoading]=useState(true)
 
-  /* ================= SLOT GENERATOR ================= */
+function generateTimeSlots(start:string,end:string){
 
-  function generateTimeSlots(start:string,end:string){
-    if(!start || !end) return []
+if(!start||!end)return[]
 
-    const slots:any[] = []
+const slots:any[]=[]
 
-    const [sh,sm] = start.split(":").map(Number)
-    const [eh,em] = end.split(":").map(Number)
+const [sh,sm]=start.split(":").map(Number)
+const [eh,em]=end.split(":").map(Number)
 
-    let startMin = sh * 60 + sm
-    let endMin = eh * 60 + em
+let startMin=sh*60+sm
+let endMin=eh*60+em
 
-    for(let i = startMin; i < endMin; i += 15){
-      const h = Math.floor(i / 60)
-      const m = i % 60
+for(let i=startMin;i<endMin;i+=15){
 
-      const value = `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`
+const h=Math.floor(i/60)
+const m=i%60
 
-      const label = new Date(`1970-01-01T${value}`).toLocaleTimeString([],{
-        hour:"2-digit",
-        minute:"2-digit"
-      })
+const value=`${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`
 
-      slots.push({ value,label })
-    }
+const label=new Date(`1970-01-01T${value}`).toLocaleTimeString([],{
+hour:"2-digit",
+minute:"2-digit"
+})
 
-    return slots
-  }
+slots.push({value,label})
 
-  /* ================= LOAD DATA ================= */
+}
 
-  const loadData = async()=>{
-    setLoading(true)
+return slots
 
-    try{
-      const res = await fetch("/api/appointments",{ credentials:"include" })
-      const data = await res.json()
-      setAppointments(Array.isArray(data) ? data : [])
-    }catch(err){
-      console.log(err)
-      setAppointments([])
-    }
+}
 
-    setLoading(false)
-  }
+const loadData=async()=>{
 
-  /* ================= INIT ================= */
+setLoading(true)
 
-  useEffect(()=>{
-    loadData()
-  },[])
+try{
 
-  useEffect(()=>{
-  console.log("CALLING API 🔥")
+const res=await fetch("/api/appointments",{credentials:"include"})
+const data=await res.json()
 
-  fetch("/api/appointments",{ credentials:"include" })
-    .then(res => res.json())
-    .then(data => {
-      console.log("DATA:", data)
-      setAppointments(data || [])
-      setLoading(false)
-    })
-    .catch(err=>{
-      console.log("ERROR:", err)
-      setLoading(false)
-    })
+setAppointments(Array.isArray(data)?data:[])
 
+}catch(err){
+
+console.log(err)
+
+setAppointments([])
+
+}
+
+setLoading(false)
+
+}
+
+useEffect(()=>{
+loadData()
 },[])
 
-  /* ================= RESCHEDULE ================= */
+const openReschedule=async(a:any)=>{
 
-  const openReschedule = async(a:any)=>{
-    setSelected(a)
-    setNewDate(new Date(a.date))
-    setNewTime(a.time)
+setSelected(a)
+setNewDate(new Date(a.date))
+setNewTime(a.time)
 
-    const res = await fetch(`/api/doctors/availability?doctorId=${a.doctorId}`,{ credentials:"include" })
-    const data = await res.json()
-    setAvailability(data)
-  }
+const res=await fetch(`/api/doctors/availability?doctorId=${a.doctor?.id}`,{
+credentials:"include"
+})
 
-  const timeSlots = availability
-    ? generateTimeSlots(availability.start, availability.end)
-    : []
+const data=await res.json()
 
-  const isSlotBooked = (date: Date, time: string) => {
-    return appointments.some((a) =>
-      new Date(a.date).toDateString() === date.toDateString() &&
-      a.time === time &&
-      a.id !== selected?.id
-    )
-  }
+setAvailability(data)
 
-  /* 🔥 FIXED DAY FORMAT */
-  const isDoctorAvailable = (date:Date)=>{
-    if(!availability?.days) return true
+}
 
-    const day = date.toLocaleDateString("en-US",{ weekday:"long" })
+const timeSlots=availability
+?generateTimeSlots(availability.start,availability.end)
+:[]
 
-    return availability.days.includes(day)
-  }
+const isSlotBooked=(date:Date,time:string)=>{
 
-  /* ================= SAVE ================= */
+return appointments.some((a)=>
+new Date(a.date).toDateString()===date.toDateString() &&
+a.time===time &&
+a.id!==selected?.id
+)
 
-  const saveReschedule = async()=>{
-    if(!selected || !newDate || !newTime){
-      toast.error("Select date & time")
-      return
-    }
+}
 
-    const res = await fetch(`/api/appointments/${selected.id}`,{
-      method:"PUT",
-      credentials:"include",
-      headers:{ "Content-Type":"application/json" },
-      body:JSON.stringify({
-        date:newDate,
-        time:newTime
-      })
-    })
+const isDoctorAvailable=(date:Date)=>{
 
-    if(res.ok){
-      toast.success("Rescheduled ✅")
-      setSelected(null)
-      await loadData()
-    }else{
-      const err = await res.json()
-      toast.error(err.error || "Failed")
-    }
-  }
+if(!availability?.days)return true
 
-  /* ================= CANCEL ================= */
+const day=date.toLocaleDateString("en-US",{weekday:"long"})
 
-  const cancelAppointment = async(id:string)=>{
-    await fetch(`/api/appointments/${id}`,{
-      method:"DELETE",
-      credentials:"include"
-    })
+return availability.days.includes(day)
 
-    toast.success("Cancelled ❌")
-    await loadData()
-  }
+}
 
-  /* ================= LOADING ================= */
+const saveReschedule=async()=>{
 
-  if(loading){
-    return <div className="p-6 text-sm">Loading appointments...</div>
-  }
+if(!selected||!newDate||!newTime){
+toast.error("Select date & time")
+return
+}
 
-  /* ================= UI ================= */
+const res=await fetch(`/api/appointments/${selected.id}`,{
+method:"PUT",
+credentials:"include",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({
+date:newDate,
+time:newTime
+})
+})
 
-  return(
+if(res.ok){
 
-    <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
+toast.success("Rescheduled ✅")
 
-      <h1 className="text-2xl font-bold">Appointments</h1>
+setSelected(null)
 
-      <div className="grid md:grid-cols-3 gap-4">
+await loadData()
 
-        {appointments.length === 0 && (
-          <p className="text-gray-500">No appointments found</p>
-        )}
+}else{
 
-        {appointments.map((a:any)=>(
+const err=await res.json()
 
-          <div
-            key={a.id}
-            className={`p-4 rounded-xl shadow space-y-2
-            ${a.status === "cancelled"
-              ? "bg-red-50 border border-red-300"
-              : "bg-white"
-            }`}
-          >
+toast.error(err.error||"Failed")
 
-            {/* 🔥 SHOW BOTH */}
-            <h2 className="font-semibold">
-              Dr. {a.doctor?.name || "-"}
-            </h2>
+}
 
-            <p className="text-sm">
-              Patient: {a.patient?.name || "-"}
-            </p>
+}
 
-            <p className="text-sm">
-              {new Date(a.date).toDateString()}
-            </p>
+const cancelAppointment=async(id:string)=>{
 
-            <p className="text-sm">{a.time}</p>
+await fetch(`/api/appointments/${id}`,{
+method:"DELETE",
+credentials:"include"
+})
 
-            {/* STATUS */}
-            <p className={`text-xs font-semibold
-              ${a.status === "cancelled"
-                ? "text-red-500"
-                : a.status === "completed"
-                  ? "text-green-600"
-                  : "text-yellow-600"
-              }
-            `}>
-              {a.status === "cancelled"
-                ? "❌ Cancelled"
-                : a.status === "completed"
-                  ? "✔ Completed"
-                  : "⏳ Pending"}
-            </p>
+toast.success("Cancelled ❌")
 
-            {/* ACTIONS */}
-            {a.status === "pending" && (
+await loadData()
 
-              <div className="flex gap-2">
+}
 
-                <button
-                  onClick={()=>openReschedule(a)}
-                  className="flex-1 bg-blue-600 text-white py-2 rounded text-sm"
-                >
-                  Reschedule
-                </button>
+if(loading){
 
-                <button
-                  onClick={()=>cancelAppointment(a.id)}
-                  className="flex-1 bg-red-500 text-white py-2 rounded text-sm"
-                >
-                  Cancel
-                </button>
+return(
 
-              </div>
+<div className="min-h-screen bg-[#f4f7fb] p-6">
 
-            )}
+<div className="max-w-7xl mx-auto space-y-6">
 
-          </div>
+<div className="bg-white rounded-[28px] p-5 shadow-sm border border-gray-100 animate-pulse h-28"/>
 
-        ))}
+<div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
 
-      </div>
+{[1,2,3].map(i=>(
 
-      {/* MODAL */}
-      {selected && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
+<div
+key={i}
+className="bg-white rounded-[28px] p-5 shadow-sm border border-gray-100 animate-pulse h-52"
+/>
 
-          <div className="bg-white p-6 rounded-xl w-full max-w-sm space-y-4">
+))}
 
-            <h2 className="font-bold">Reschedule</h2>
+</div>
 
-            <DatePicker
-              selected={newDate}
-              onChange={(d)=>setNewDate(d)}
-              filterDate={(d)=>isDoctorAvailable(d)}
-              className="w-full border p-2 rounded"
-            />
+</div>
 
-            <select
-              value={newTime}
-              onChange={(e)=>setNewTime(e.target.value)}
-              className="w-full border p-2 rounded"
-            >
-              <option value="">Select Time</option>
+</div>
 
-              {timeSlots.map((slot:any)=>{
-                const booked = newDate ? isSlotBooked(newDate, slot.value) : false
+)
 
-                return(
-                  <option key={slot.value} value={slot.value} disabled={booked}>
-                    {booked ? "❌ Booked" : slot.label}
-                  </option>
-                )
-              })}
+}
 
-            </select>
+return(
 
-            <button
-              onClick={saveReschedule}
-              className="w-full bg-blue-600 text-white py-2 rounded"
-            >
-              Save
-            </button>
+<div className="min-h-screen bg-[#f4f7fb] p-4 sm:p-6 md:p-8">
 
-            <button
-              onClick={()=>setSelected(null)}
-              className="w-full bg-gray-300 py-2 rounded"
-            >
-              Close
-            </button>
+<div className="max-w-7xl mx-auto space-y-8">
 
-          </div>
+<div className="bg-white rounded-[30px] p-5 sm:p-6 shadow-sm border border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 
-        </div>
-      )}
+<div>
+<h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Appointments</h1>
+<p className="text-sm text-gray-500 mt-1">Manage upcoming consultations</p>
+</div>
 
-    </div>
-  )
+<div className="flex items-center gap-2 bg-blue-50 text-blue-700 px-4 py-2 rounded-2xl text-sm font-medium">
+<CalendarDays size={17}/>
+{appointments.length} Appointments
+</div>
+
+</div>
+
+{appointments.length===0&&(
+
+<div className="bg-white rounded-[30px] border border-dashed border-gray-300 p-14 text-center shadow-sm">
+
+<div className="w-16 h-16 rounded-full bg-gray-100 mx-auto flex items-center justify-center mb-4">
+<CalendarDays size={28}/>
+</div>
+
+<h2 className="font-semibold text-lg">No Appointments</h2>
+<p className="text-sm text-gray-500 mt-1">Your bookings will appear here</p>
+
+</div>
+
+)}
+
+<div className="grid md:grid-cols-2 xl:grid-cols-3 gap-5">
+
+{appointments.map((a:any)=>(
+
+<motion.div
+key={a.id}
+initial={{opacity:0,y:20}}
+animate={{opacity:1,y:0}}
+whileHover={{y:-4}}
+className={`rounded-[30px] p-5 shadow-sm border space-y-5 ${
+a.status==="cancelled"
+?"bg-red-50 border-red-200"
+:"bg-white border-gray-100"
+}`}
+>
+
+<div className="flex items-start justify-between">
+
+<div>
+<h2 className="font-semibold text-lg">
+Dr. {a.doctor?.name||"-"}
+</h2>
+
+<p className="text-sm text-gray-500 mt-1">
+Patient: {a.patient?.name||"-"}
+</p>
+</div>
+
+<div className={`w-11 h-11 rounded-2xl flex items-center justify-center ${
+a.status==="cancelled"
+?"bg-red-100 text-red-500"
+:a.status==="completed"
+?"bg-green-100 text-green-600"
+:"bg-yellow-100 text-yellow-600"
+}`}>
+
+{a.status==="cancelled"
+?<XCircle size={20}/>
+:a.status==="completed"
+?<CheckCircle2 size={20}/>
+:<Clock3 size={20}/>
+}
+
+</div>
+
+</div>
+
+<div className="space-y-2 text-sm">
+
+<div className="flex items-center justify-between bg-gray-50 rounded-2xl px-4 py-3">
+<span className="text-gray-500">Date</span>
+<span className="font-medium">
+{new Date(a.date).toDateString()}
+</span>
+</div>
+
+<div className="flex items-center justify-between bg-gray-50 rounded-2xl px-4 py-3">
+<span className="text-gray-500">Time</span>
+<span className="font-medium">{a.time}</span>
+</div>
+
+</div>
+
+<div className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${
+a.status==="cancelled"
+?"bg-red-100 text-red-600"
+:a.status==="completed"
+?"bg-green-100 text-green-600"
+:"bg-yellow-100 text-yellow-700"
+}`}>
+
+{a.status==="cancelled"
+?"Cancelled"
+:a.status==="completed"
+?"Completed"
+:"Pending"}
+
+</div>
+
+{a.status==="pending"&&(
+
+<div className="flex gap-3">
+
+<button
+onClick={()=>openReschedule(a)}
+className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-2xl text-sm font-medium"
+>
+<RotateCw size={16}/>
+Reschedule
+</button>
+
+<button
+onClick={()=>cancelAppointment(a.id)}
+className="flex-1 bg-red-500 hover:bg-red-600 text-white py-3 rounded-2xl text-sm font-medium"
+>
+Cancel
+</button>
+
+</div>
+
+)}
+
+</motion.div>
+
+))}
+
+</div>
+
+<AnimatePresence>
+
+{selected&&(
+
+<motion.div
+initial={{opacity:0}}
+animate={{opacity:1}}
+exit={{opacity:0}}
+className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+>
+
+<motion.div
+initial={{scale:.9,opacity:0}}
+animate={{scale:1,opacity:1}}
+exit={{scale:.9,opacity:0}}
+className="w-full max-w-md bg-white rounded-[32px] p-6 space-y-5"
+>
+
+<div className="flex items-start justify-between">
+
+<div>
+<h2 className="text-xl font-bold">Reschedule</h2>
+<p className="text-sm text-gray-500 mt-1">
+Choose new slot
+</p>
+</div>
+
+<button
+onClick={()=>setSelected(null)}
+className="w-10 h-10 rounded-2xl bg-gray-100 flex items-center justify-center"
+>
+<X size={18}/>
+</button>
+
+</div>
+
+<div className="space-y-2">
+
+<p className="text-sm font-medium">Select Date</p>
+
+<DatePicker
+selected={newDate}
+onChange={(d)=>setNewDate(d)}
+filterDate={(d)=>isDoctorAvailable(d)}
+className="w-full border border-gray-200 rounded-2xl px-4 py-3 outline-none"
+/>
+
+</div>
+
+<div className="space-y-3">
+
+<div className="flex items-center gap-2">
+<Clock3 size={16}/>
+<p className="text-sm font-medium">Available Slots</p>
+</div>
+
+<div className="flex flex-wrap gap-2 max-h-52 overflow-auto pr-1">
+
+{timeSlots.map((slot:any)=>{
+
+const booked=newDate
+?isSlotBooked(newDate,slot.value)
+:false
+
+return(
+
+<button
+key={slot.value}
+disabled={booked}
+onClick={()=>setNewTime(slot.value)}
+className={`px-3 py-2 rounded-xl text-xs font-medium transition ${
+booked
+?"bg-red-100 text-red-500 line-through"
+:newTime===slot.value
+?"bg-blue-600 text-white"
+:"bg-gray-100 hover:bg-gray-200"
+}`}
+>
+{booked?"Full":slot.label}
+</button>
+
+)
+
+})}
+
+</div>
+
+</div>
+
+<button
+onClick={saveReschedule}
+className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-2xl font-medium"
+>
+Save Changes
+</button>
+
+<button
+onClick={()=>setSelected(null)}
+className="w-full bg-gray-100 py-3 rounded-2xl font-medium"
+>
+Close
+</button>
+
+</motion.div>
+
+</motion.div>
+
+)}
+
+</AnimatePresence>
+
+</div>
+
+</div>
+
+)
 }
