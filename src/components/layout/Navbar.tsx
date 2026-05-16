@@ -30,12 +30,12 @@ export default function Navbar() {
     <header className="sticky top-4 z-50 px-4">
 
       {/* GLASS CONTAINER */}
-      <div className="max-w-7xl mx-auto flex justify-between items-center px-6 py-3
-      rounded-2xl
-      bg-white/30 backdrop-blur-2xl
-      border border-white/20
-      shadow-[0_8px_30px_rgba(0,0,0,0.08)]
-      relative overflow-hidden">
+     <div className="max-w-7xl mx-auto flex justify-between items-center px-6 py-3
+rounded-2xl
+bg-white/30 backdrop-blur-2xl
+border border-white/20
+shadow-[0_8px_30px_rgba(0,0,0,0.08)]
+relative">
 
         {/* GRADIENT BORDER GLOW */}
         <div className="absolute inset-0 rounded-2xl pointer-events-none
